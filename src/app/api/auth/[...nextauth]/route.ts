@@ -3,7 +3,10 @@ import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { NextAuthOptions } from "next-auth";
 
+const SECRET_KEY = process.env.SECRET_KEY
+
 export const authOptions: NextAuthOptions = {
+
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -38,7 +41,7 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
   },
-  secret: "hola", //TODO: Use a secure secret in production
+  secret: SECRET_KEY
 };
 
 const handler = NextAuth(authOptions);
