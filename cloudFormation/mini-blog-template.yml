@@ -145,8 +145,8 @@ Resources:
       DBInstanceClass: db.t4g.micro
       Engine: postgres
       EngineVersion: 17.4
-      MasterUsername: -----
-      MasterUserPassword: -----
+      MasterUsername: adminApp
+      MasterUserPassword: adminAppPassword
       VPCSecurityGroups:
         - !GetAtt RDSSecurityGroup.GroupId
       DBSubnetGroupName: !Ref DBSubnetGroup
@@ -178,19 +178,48 @@ Resources:
       Cpu: "512"
       Memory: "744"
       NetworkMode: awsvpc
-      ExecutionRoleArn: --------------------
-      TaskRoleArn: ----------------------
+      ExecutionRoleArn: arn:aws:iam::621072895174:role/ecsTaskExecutionRole
+      TaskRoleArn: arn:aws:iam::621072895174:role/ecsTaskExecutionRole
       ContainerDefinitions:
         - Name: security
           Essential: true
-          Image: ---------------
+          Image: 621072895174.dkr.ecr.us-east-1.amazonaws.com/miniblog-security:latest  
           Cpu: 512
           Memory: 550
           PortMappings:
             - ContainerPort: 8082
               Protocol: tcp
               Name: security
-
+  
+  RegisterLoginTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: register-login-task
+      RequiresCompatibilities:
+        - EC2
+      Cpu: "512"
+      Memory: "744"
+      NetworkMode: awsvpc
+      ExecutionRoleArn: arn:aws:iam::621072895174:role/ecsTaskExecutionRole
+      TaskRoleArn: arn:aws:iam::621072895174:role/ecsTaskExecutionRole
+      ContainerDefinitions:
+        - Name: register-login
+          Essential: true
+          Image: 621072895174.dkr.ecr.us-east-1.amazonaws.com/microblog-login-register:latest  
+          Cpu: 512
+          Memory: 550
+          Environment:
+            - Name: QUARKUS_DATASOURCE_JDBC_URL
+              Value:  !Sub "jdbc:postgresql://${RDSPostgres.Endpoint.Address}:5432/postgres"
+            - Name: QUARKUS_DATASOURCE_USERNAME
+              Value: adminApp
+            - Name: QUARKUS_DATASOURCE_PASSWORD
+              Value: adminAppPassword
+          PortMappings:
+            - ContainerPort: 8080
+              Protocol: tcp
+              Name: register-login
+  
   EncryptServiceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -204,6 +233,40 @@ Resources:
       Tags:
         - Key: Name
           Value: sg-encrypt
+
+  RegisterLoginSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for Register Login Service
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: sg-register-login
+
+  RegisterLoginService:
+    Type: AWS::ECS::Service
+    DependsOn: 
+      - ECSCluster
+      - SecurityEncryptService
+    Properties:
+      Cluster: !Ref ECSCluster
+      TaskDefinition: !Ref RegisterLoginTaskDefinition
+      DesiredCount: 1
+      CapacityProviderStrategy:
+        - CapacityProvider: !Ref ECSCapacityProvider
+          Weight: 1
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          Subnets:
+            - !Ref PublicSubnet1 
+          AssignPublicIp: ENABLED
+          SecurityGroups:
+            - !GetAtt RegisterLoginSecurityGroup.GroupId
 
   SecurityEncryptService:
     Type: AWS::ECS::Service
