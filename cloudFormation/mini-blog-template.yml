@@ -398,7 +398,7 @@ Resources:
       StageName: dev
       AutoDeploy: true
 
-  Outputs:
-    ApiGatewayEndpoint:
-      Description: Endpoint HTTP público para el servicio RegisterLogin
-      Value: !Sub "https://${ApiGatewayHttpApi}.execute-api.${AWS::Region}.amazonaws.com/dev/"
+Outputs:
+  ApiGatewayEndpoint:
+    Description: Endpoint HTTP público para el servicio RegisterLogin
+    Value: !Sub "https://${ApiGatewayHttpApi}.execute-api.${AWS::Region}.amazonaws.com/dev/"
