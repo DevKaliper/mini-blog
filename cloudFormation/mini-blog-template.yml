@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Infraestructura base para microservicios ECS + RDS + NLB
+Description: Infraestructura base para microservicios ECS + RDS + Api Gateway
 
 Parameters:
   VpcCIDR:
