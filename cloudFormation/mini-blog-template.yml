@@ -399,7 +399,7 @@ Resources:
     Type: AWS::ApiGatewayV2::Stage
     Properties:
       ApiId: !Ref ApiGatewayHttpApi
-      StageName: dev
+      StageName: api
       AutoDeploy: true
 
   InternalTargetGroup:
