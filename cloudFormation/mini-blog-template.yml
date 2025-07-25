@@ -414,7 +414,7 @@ Resources:
   InternalNLB:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
-      Name: internal-nlb-register-login
+      Name: nlb-register-login-internal
       Type: network
       Scheme: internal
       Subnets:
