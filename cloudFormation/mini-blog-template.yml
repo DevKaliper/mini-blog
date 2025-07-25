@@ -14,6 +14,11 @@ Parameters:
   PrivateSubnet2CIDR:
     Type: String
     Default: 10.0.3.0/24
+  RdsUserName:
+    Type: String
+  RdsPassword:
+    Type: String
+    NoEcho: true
 
 Resources:
   VPC:
@@ -145,8 +150,8 @@ Resources:
       DBInstanceClass: db.t4g.micro
       Engine: postgres
       EngineVersion: 17.4
-      MasterUsername: adminApp
-      MasterUserPassword: adminAppPassword
+      MasterUsername: !Ref RdsUserName
+      MasterUserPassword: !Ref RdsPassword
       VPCSecurityGroups:
         - !GetAtt RDSSecurityGroup.GroupId
       DBSubnetGroupName: !Ref DBSubnetGroup
@@ -212,9 +217,9 @@ Resources:
             - Name: QUARKUS_DATASOURCE_JDBC_URL
               Value:  !Sub "jdbc:postgresql://${RDSPostgres.Endpoint.Address}:5432/postgres"
             - Name: QUARKUS_DATASOURCE_USERNAME
-              Value: adminApp
+              Value: !Ref RdsUserName
             - Name: QUARKUS_DATASOURCE_PASSWORD
-              Value: adminAppPassword
+              Value: !Ref RdsPassword
           PortMappings:
             - ContainerPort: 8080
               Protocol: tcp
