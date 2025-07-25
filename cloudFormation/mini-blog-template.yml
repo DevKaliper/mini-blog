@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Infraestructura base para microservicios ECS + RDS + Api Gateway
+Description: Infraestructura base para microservicios ECS + RDS + NLB + Api Gateway
 
 Parameters:
   VpcCIDR:
@@ -121,7 +121,7 @@ Resources:
   ECSCapacityProvider:
     Type: AWS::ECS::CapacityProvider
     Properties:
-      Name: blog-backend-provider
+      Name: blog-backend-internal-provider
       AutoScalingGroupProvider:
         AutoScalingGroupArn: !Ref ECSAutoScalingGroup
         ManagedScaling:
@@ -248,7 +248,7 @@ Resources:
         - IpProtocol: tcp
           FromPort: 8080
           ToPort: 8080
-          SourceSecurityGroupId: !Ref ApiGatewayVpcLinkSecurityGroup
+          CidrIp: 10.0.0.0/16
 
       Tags:
         - Key: Name
@@ -339,7 +339,7 @@ Resources:
   ECSAutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
-      MinSize: 2
+      MinSize: 1
       MaxSize: 2
       DesiredCapacity: 2
       LaunchTemplate:
@@ -385,7 +385,8 @@ Resources:
       ConnectionType: VPC_LINK
       ConnectionId: !Ref ApiGatewayVpcLink
       IntegrationMethod: ANY
-      IntegrationUri: !Sub http://${InternalNLB.DNSName}:8080
+      PayloadFormatVersion: "1.0"
+      IntegrationUri: !Ref InternalNLBListener
 
   ApiGatewayRoute:
     Type: AWS::ApiGatewayV2::Route
@@ -406,10 +407,9 @@ Resources:
     Properties:
       Name: register-login-tg
       Port: 8080
-      Protocol: HTTP
+      Protocol: TCP
       TargetType: ip
       VpcId: !Ref VPC
-      HealthCheckPath: /q/health
 
   InternalNLB:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
@@ -436,4 +436,4 @@ Resources:
 Outputs:
   ApiGatewayEndpoint:
     Description: Endpoint HTTP publico para el servicio RegisterLogin
-    Value: !Sub "https://${ApiGatewayHttpApi}.execute-api.${AWS::Region}.amazonaws.com/dev/"
+    Value: !Sub "https://${ApiGatewayHttpApi}.execute-api.${AWS::Region}.amazonaws.com/api/"
