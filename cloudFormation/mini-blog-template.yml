@@ -259,6 +259,7 @@ Resources:
     DependsOn:
       - ECSCluster
       - SecurityEncryptService
+      - InternalTargetGroup
     Properties:
       Cluster: !Ref ECSCluster
       TaskDefinition: !Ref RegisterLoginTaskDefinition
@@ -272,6 +273,10 @@ Resources:
             - !Ref PublicSubnet1
           SecurityGroups:
             - !Ref RegisterLoginSecurityGroup
+      LoadBalancers:
+        - TargetGroupArn: !Ref InternalTargetGroup
+          ContainerName: register-login
+          ContainerPort: 8080
 
   SecurityEncryptService:
     Type: AWS::ECS::Service
@@ -334,9 +339,9 @@ Resources:
   ECSAutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
-      MinSize: 1
-      MaxSize: 1
-      DesiredCapacity: 1
+      MinSize: 2
+      MaxSize: 2
+      DesiredCapacity: 2
       LaunchTemplate:
         LaunchTemplateId: !Ref ECSLaunchTemplate
         Version: !GetAtt ECSLaunchTemplate.LatestVersionNumber
@@ -380,8 +385,7 @@ Resources:
       ConnectionType: VPC_LINK
       ConnectionId: !Ref ApiGatewayVpcLink
       IntegrationMethod: ANY
-      IntegrationUri: !Sub http://
-        ${RegisterLoginService.Endpoint}:8080
+      IntegrationUri: !Sub http://${InternalNLB.DNSName}:8080
 
   ApiGatewayRoute:
     Type: AWS::ApiGatewayV2::Route
@@ -396,6 +400,38 @@ Resources:
       ApiId: !Ref ApiGatewayHttpApi
       StageName: dev
       AutoDeploy: true
+
+  InternalTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: register-login-tg
+      Port: 8080
+      Protocol: HTTP
+      TargetType: ip
+      VpcId: !Ref VPC
+      HealthCheckPath: /q/health
+
+  InternalNLB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: internal-nlb-register-login
+      Type: network
+      Scheme: internal
+      Subnets:
+        - !Ref PublicSubnet1
+      LoadBalancerAttributes:
+        - Key: load_balancing.cross_zone.enabled
+          Value: true
+
+  InternalNLBListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref InternalNLB
+      Port: 8080
+      Protocol: TCP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref InternalTargetGroup
 
 Outputs:
   ApiGatewayEndpoint:
