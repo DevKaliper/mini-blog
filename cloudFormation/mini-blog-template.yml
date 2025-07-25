@@ -270,7 +270,6 @@ Resources:
         AwsvpcConfiguration:
           Subnets:
             - !Ref PublicSubnet1
-          AssignPublicIp: ENABLED
           SecurityGroups:
             - !Ref RegisterLoginSecurityGroup
 
