@@ -228,7 +228,7 @@ Resources:
   EncryptServiceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: SG para Encrypt Service (solo permite tráfico desde RegisterLogin)
+      GroupDescription: SG para Encrypt Service (solo permite trafico desde RegisterLogin)
       VpcId: !Ref VPC
       SecurityGroupIngress:
         - IpProtocol: tcp
@@ -242,7 +242,7 @@ Resources:
   RegisterLoginSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: SG para RegisterLogin (permite tráfico de API Gateway)
+      GroupDescription: SG para RegisterLogin (permite trafico de API Gateway)
       VpcId: !Ref VPC
       SecurityGroupIngress:
         - IpProtocol: tcp
@@ -400,5 +400,5 @@ Resources:
 
 Outputs:
   ApiGatewayEndpoint:
-    Description: Endpoint HTTP público para el servicio RegisterLogin
+    Description: Endpoint HTTP publico para el servicio RegisterLogin
     Value: !Sub "https://${ApiGatewayHttpApi}.execute-api.${AWS::Region}.amazonaws.com/dev/"
