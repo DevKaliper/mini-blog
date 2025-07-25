@@ -188,14 +188,14 @@ Resources:
       ContainerDefinitions:
         - Name: security
           Essential: true
-          Image: 621072895174.dkr.ecr.us-east-1.amazonaws.com/miniblog-security:latest  
+          Image: 621072895174.dkr.ecr.us-east-1.amazonaws.com/miniblog-security:latest
           Cpu: 512
           Memory: 550
           PortMappings:
             - ContainerPort: 8082
               Protocol: tcp
               Name: security
-  
+
   RegisterLoginTaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
@@ -210,12 +210,12 @@ Resources:
       ContainerDefinitions:
         - Name: register-login
           Essential: true
-          Image: 621072895174.dkr.ecr.us-east-1.amazonaws.com/microblog-login-register:latest  
+          Image: 621072895174.dkr.ecr.us-east-1.amazonaws.com/microblog-login-register:latest
           Cpu: 512
           Memory: 550
           Environment:
             - Name: QUARKUS_DATASOURCE_JDBC_URL
-              Value:  !Sub "jdbc:postgresql://${RDSPostgres.Endpoint.Address}:5432/postgres"
+              Value: !Sub "jdbc:postgresql://${RDSPostgres.Endpoint.Address}:5432/postgres"
             - Name: QUARKUS_DATASOURCE_USERNAME
               Value: !Ref RdsUserName
             - Name: QUARKUS_DATASOURCE_PASSWORD
@@ -224,17 +224,17 @@ Resources:
             - ContainerPort: 8080
               Protocol: tcp
               Name: register-login
-  
+
   EncryptServiceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Security group for Security Encrypt Service
+      GroupDescription: SG para Encrypt Service (solo permite tráfico desde RegisterLogin)
       VpcId: !Ref VPC
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 8082
           ToPort: 8082
-          CidrIp: 10.0.0.0/16
+          SourceSecurityGroupId: !Ref RegisterLoginSecurityGroup
       Tags:
         - Key: Name
           Value: sg-encrypt
@@ -242,20 +242,21 @@ Resources:
   RegisterLoginSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Security group for Register Login Service
+      GroupDescription: SG para RegisterLogin (permite tráfico de API Gateway)
       VpcId: !Ref VPC
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 8080
           ToPort: 8080
-          CidrIp: 0.0.0.0/0
+          SourceSecurityGroupId: !Ref ApiGatewayVpcLinkSecurityGroup
+
       Tags:
         - Key: Name
           Value: sg-register-login
 
   RegisterLoginService:
     Type: AWS::ECS::Service
-    DependsOn: 
+    DependsOn:
       - ECSCluster
       - SecurityEncryptService
     Properties:
@@ -268,10 +269,10 @@ Resources:
       NetworkConfiguration:
         AwsvpcConfiguration:
           Subnets:
-            - !Ref PublicSubnet1 
+            - !Ref PublicSubnet1
           AssignPublicIp: ENABLED
           SecurityGroups:
-            - !GetAtt RegisterLoginSecurityGroup.GroupId
+            - !Ref RegisterLoginSecurityGroup
 
   SecurityEncryptService:
     Type: AWS::ECS::Service
@@ -289,7 +290,7 @@ Resources:
             - !Ref PrivateSubnet1
             - !Ref PrivateSubnet2
           SecurityGroups:
-            - !GetAtt EncryptServiceSecurityGroup.GroupId
+            - !Ref EncryptServiceSecurityGroup
           AssignPublicIp: DISABLED
       ServiceRegistries:
         - RegistryArn: !GetAtt ServiceDiscoveryService.Arn
@@ -346,3 +347,58 @@ Resources:
         - Key: Name
           Value: ecs-instance
           PropagateAtLaunch: true
+
+  ApiGatewayVpcLinkSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: SG para VPC Link del API Gateway
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: sg-apigw-vpclink
+
+  ApiGatewayHttpApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: RegisterLoginHttpApi
+      ProtocolType: HTTP
+
+  ApiGatewayVpcLink:
+    Type: AWS::ApiGatewayV2::VpcLink
+    Properties:
+      Name: RegisterLoginVpcLink
+      SubnetIds:
+        - !Ref PublicSubnet1
+      SecurityGroupIds:
+        - !Ref ApiGatewayVpcLinkSecurityGroup
+        - !Ref RegisterLoginSecurityGroup
+
+  ApiGatewayIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref ApiGatewayHttpApi
+      IntegrationType: HTTP_PROXY
+      ConnectionType: VPC_LINK
+      ConnectionId: !Ref ApiGatewayVpcLink
+      IntegrationMethod: ANY
+      IntegrationUri: !Sub http://
+        ${RegisterLoginService.Endpoint}:8080
+
+  ApiGatewayRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref ApiGatewayHttpApi
+      RouteKey: "ANY /{proxy+}"
+      Target: !Sub integrations/${ApiGatewayIntegration}
+
+  ApiGatewayStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId: !Ref ApiGatewayHttpApi
+      StageName: dev
+      AutoDeploy: true
+
+  Outputs:
+    ApiGatewayEndpoint:
+      Description: Endpoint HTTP público para el servicio RegisterLogin
+      Value: !Sub "https://${ApiGatewayHttpApi}.execute-api.${AWS::Region}.amazonaws.com/dev/"
