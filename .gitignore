@@ -23,7 +23,6 @@
 # misc
 .DS_Store
 *.pem
-/diagrama
 
 # debug
 npm-debug.log*
