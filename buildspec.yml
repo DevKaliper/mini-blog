@@ -6,25 +6,32 @@ phases:
       nodejs: latest
     commands:
       - npm ci
+
   build:
     commands:
       - npm run build
+
   post_build:
     commands:
+      - echo "✔ Verificando existencia de .next/static..."
+      - |
+        if [ ! -d ".next/static" ]; then
+          echo "❌ ERROR: .next/static no encontrado, abortando build."
+          exit 1
+        fi
+      - echo "✔ .next/static encontrado"
       - echo "✅ Build completed"
 
 artifacts:
-  # Empacamos solo lo imprescindible
-  base-directory: . 
+  base-directory: .
   files:
-    - '.next/**'
+    - '.next/**/*'         
     - 'public/**'
-    - 'next.config.js'
     - 'package.json'
     - 'package-lock.json'
-  # Excluimos diagramas, docs, markdowns y node_modules
+    - 'next.config.js'
   exclude:
-    - '*.md'
+    - '**/*.md'
     - 'docs/**'
     - 'diagrams/**'
     - 'node_modules/**'
