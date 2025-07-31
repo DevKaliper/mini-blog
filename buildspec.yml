@@ -15,12 +15,12 @@ phases:
 artifacts:
   base-directory: .
   files:
-    - '**/*'
     - '.next/**'
-    - 'next.config.js'
+    - 'public/**'
     - 'package.json'
     - 'package-lock.json'
-    - 'public/**'
-    - 'tsconfig.json'
-    - '!node_modules/**'
+    - 'next.config.js'
     - '!**/*.md'
+    - '!**/docs/**'
+    - '!**/diagrams/**'
+    - '!node_modules/**'
