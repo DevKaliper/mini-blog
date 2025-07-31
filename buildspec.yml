@@ -3,15 +3,24 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-        nodejs: latest
+      nodejs: lastest
     commands:
-      - npm install
+      - npm ci
   build:
     commands:
       - npm run build
   post_build:
     commands:
-      - echo "Build complete"
+      - echo "✅ Build completed"
 artifacts:
+  base-directory: .
   files:
     - '**/*'
+    - '.next/**'
+    - 'next.config.js'
+    - 'package.json'
+    - 'package-lock.json'
+    - 'public/**'
+    - 'tsconfig.json'
+    - '!node_modules/**'
+    - '!**/*.md'
