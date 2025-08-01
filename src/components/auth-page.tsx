@@ -69,7 +69,7 @@ export default function Component() {
 
           <div className="space-y-6">
             <div className="space-y-2">
-              <h1 className="text-3xl font-bold text-white">Sign in to X</h1>
+              <h1 className="text-3xl font-bold text-white">Sign in to MicroBlog</h1>
             </div>
 
             {/* Auth Form */}
