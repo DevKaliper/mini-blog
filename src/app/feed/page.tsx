@@ -13,7 +13,6 @@ export default async function BlogFeed() {
     redirect("/api/auth/signin?callbackUrl=/feed");
   }
 
-  console.log(session)
   return (
     <FeedPage session={session} />
   );
