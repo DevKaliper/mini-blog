@@ -1,145 +1,60 @@
 "use client";
 
-import type React from "react";
-
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { X, Eye, EyeOff } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { MessageCircle} from "lucide-react";
 import { signIn } from "next-auth/react";
 
-export default function Component() {
-  const [showPassword, setShowPassword] = useState(false);
-  const [formData, setFormData] = useState({
-    username: "",
-    email: "",
-    password: "",
-  });
-  const router = useRouter();
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
-  const encryptPassword = async (password: string) => {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(password);
-    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-  };
-
-  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const username = formData.get("username") as string;
-    const password = await encryptPassword(formData.get("password") as string);
-    //TODO: Validate form data before proceeding
-
-    const res = await signIn("credentials", {
-      redirect: false,
-      username,
-      password,
-    });
-
-    if (res?.error) {
-    } else {
-      router.push("/feed");
-    }
-  };
-
+export default function AuthPage() {
   return (
-    <div className="min-h-screen bg-black flex">
-      {/* Left side - Logo/Branding */}
-      <div className="hidden lg:flex lg:flex-1 items-center justify-center bg-black">
-        <X className="h-80 w-80 text-white" />
+    <div className="min-h-screen bg-black text-white grid lg:grid-cols-2">
+      {/* Left: Branding / Visual */}
+      <div className="hidden lg:flex items-center justify-center relative overflow-hidden bg-gradient-to-b from-zinc-900 to-black">
+        <div className="absolute inset-0 pointer-events-none [mask-image:radial-gradient(ellipse_at_center,white,transparent_70%)]">
+          <div className="absolute -top-24 -left-24 size-[420px] rounded-full blur-3xl opacity-30 bg-white/10" />
+          <div className="absolute -bottom-16 -right-10 size-[360px] rounded-full blur-3xl opacity-20 bg-white/10" />
+        </div>
+        <div className="relative flex flex-col items-center gap-6">
+          <MessageCircle className="h-40 w-40 md:h-56 md:w-56 text-white" />
+          <p className="text-zinc-300/80 max-w-sm text-center leading-relaxed">
+            MicroBlog — share short ideas, images and links with the community.
+          </p>
+        </div>
       </div>
 
-      {/* Right side - Auth Form */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-black">
-        <div className="w-full max-w-md space-y-8">
-          {/* Mobile logo */}
-          <div className="lg:hidden flex justify-center">
-            <X className="h-12 w-12 text-white" />
-          </div>
-
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <h1 className="text-3xl font-bold text-white">Sign in to MicroBlog</h1>
+      {/* Right: Auth Card */}
+      <div className="flex items-center justify-center p-6 sm:p-8">
+        <Card className="w-full max-w-md border-zinc-800 bg-zinc-950/60 backdrop-blur">
+          <CardHeader className="space-y-1">
+            <div className="flex items-center gap-3 lg:hidden">
+              <span className="text-lg font-semibold">MicroBlog</span>
             </div>
-
-            {/* Auth Form */}
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="username" className="text-white">
-                  Username
-                </Label>
-                <Input
-                  id="username"
-                  name="username"
-                  type="text"
-                  placeholder={"Username"}
-                  value={formData.username}
-                  onChange={handleInputChange}
-                  className="bg-black border-gray-700 text-white placeholder:text-gray-500 focus:border-blue-500"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-white">
-                  Password
-                </Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    name="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Enter your password"
-                    value={formData.password}
-                    onChange={handleInputChange}
-                    className="bg-black border-gray-700 text-white placeholder:text-gray-500 focus:border-blue-500 pr-10"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              <Button
-                type="submit"
-                className="w-full bg-white text-black hover:bg-gray-200 font-bold py-3 rounded-full"
+            <CardTitle className="text-2xl sm:text-3xl text-white">Sign in to MicroBlog</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <Button
+              className="w-full h-11 font-semibold bg-gradient-to-r from-blue-500 to-teal-500 cursor-pointer"
+              onClick={() => signIn("cognito", { callbackUrl: "/feed" })}
+            >
+              Sign in
+            </Button>
+            <p className="text-center text-sm text-zinc-400">
+              Don&apos;t have an account?{" "}
+              <button
+                onClick={() =>
+                  signIn(
+                    "cognito",
+                    { callbackUrl: "/feed" },
+                    { screen_hint: "signup", prompt: "login" }
+                  )
+                }
+                className="text-blue-400 hover:underline ml-1 cursor-pointer"
               >
-                Sign in
-              </Button>
-            </form>
-
-            <div className="text-center space-y-4">
-              <p className="text-gray-400 text-sm">
-                Don't have an account?{" "}
-                <button
-                  onClick={() => router.push("/sign-up")}
-                  className="text-blue-400 hover:underline"
-                >
-                  Sign up
-                </button>
-              </p>
-            </div>
-          </div>
-        </div>
+                Sign up
+              </button>
+            </p>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

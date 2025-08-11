@@ -6,11 +6,12 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
+  console.log(body)
 
   const command = new UpdateCommand({
     TableName: "miniblogs",
     Key: {
-      idPartition: body.idPartition,
+      id: body.id,
     },
     UpdateExpression: "set likes = likes + :increment",
     ExpressionAttributeValues: {

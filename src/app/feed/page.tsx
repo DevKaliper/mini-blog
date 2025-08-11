@@ -10,9 +10,10 @@ export default async function BlogFeed() {
   const session = await getServerSession(authOptions);
 
   if (!session) {
-    redirect("/");
+    redirect("/api/auth/signin?callbackUrl=/feed");
   }
 
+  console.log(session)
   return (
     <FeedPage session={session} />
   );

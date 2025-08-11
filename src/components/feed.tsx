@@ -26,7 +26,6 @@ import {
 
 interface BlogPost {
   id: string;
-  idPartition: string;
   author: {
     email: string;
     username: string;
@@ -60,10 +59,10 @@ export const FeedPage = ({ session }: { session: Session | null }) => {
 
   const handleLike = (postId: string) => {
     // Optimistically update the UI
-    const likePost = async (idPartition: string) => {
+    const likePost = async (id: string) => {
       await fetch("/api/dynamo/like-comment", {
         method: "POST",
-        body: JSON.stringify({ idPartition }),
+        body: JSON.stringify({ id }),
         headers: { "Content-Type": "application/json" },
       });
     };
@@ -74,7 +73,7 @@ export const FeedPage = ({ session }: { session: Session | null }) => {
 
     setPosts(
       posts.map((post) =>
-        post.idPartition === postId
+        post.id === postId
           ? { ...post, isLiked: !post.isLiked, likes: post.likes + 1 }
           : post
       )
@@ -126,8 +125,7 @@ export const FeedPage = ({ session }: { session: Session | null }) => {
   const handleSubmitPost = async () => {
     if (newPost.title && newPost.content) {
       const post: BlogPost = {
-        id: Date.now().toString(),
-        idPartition: crypto.randomUUID(),
+        id: crypto.randomUUID(),
         createdAt: new Date().toISOString().split("T")[0],
         author: {
           username: session?.user?.name || "Anonymous",
@@ -339,7 +337,7 @@ export const FeedPage = ({ session }: { session: Session | null }) => {
                         className={`flex items-center gap-2 ${
                           post.isLiked ? "text-red-500" : ""
                         }`}
-                        onClick={() => handleLike(post.idPartition)}
+                        onClick={() => handleLike(post.id)}
                       >
                         <Heart
                           className={`h-4 w-4 ${
