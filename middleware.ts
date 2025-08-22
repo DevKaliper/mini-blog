@@ -1,6 +1,6 @@
-// middleware.ts en la raíz del proyecto
-export { default } from "next-auth/middleware";
+// // middleware.ts en la raíz del proyecto
+// export { default } from "next-auth/middleware";
 
-export const config = {
-  matcher: ["/feed"],
-};
+// export const config = {
+//   matcher: ["/feed"],
+// };

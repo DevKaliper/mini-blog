@@ -4,8 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MessageCircle} from "lucide-react";
 import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export default function AuthPage() {
+  const router = useRouter();
+
   return (
     <div className="min-h-screen bg-black text-white grid lg:grid-cols-2">
       {/* Left: Branding / Visual */}
@@ -51,6 +54,18 @@ export default function AuthPage() {
                 className="text-blue-400 hover:underline ml-1 cursor-pointer"
               >
                 Sign up
+              </button>
+            </p>
+            <p>
+              or continue as guest{" "}
+              <button
+                onClick={() => {
+                  localStorage.setItem("userType", "guest");
+                  router.push("/feed");
+                }}
+                className="text-blue-400 hover:underline ml-1 cursor-pointer"
+              >
+                Continue as Guest
               </button>
             </p>
           </CardContent>
